@@ -7,6 +7,12 @@ Expression and Velocity Integration
   <img src="/doc/pipeline.png"/>
 </p>
 
+## Installation
+
+## Dependencies
+
+## Tutorial
+
 ```
 model = evi.tl.EVI(adata = adata, x1key = x1key, x2key = x2key, X1 = X1, X2 = X2, int_method = int_method,
             int_method_params = int_method_params, eval_method = eval_method, eval_method_params = eval_method_params, logX1 = logX1,
