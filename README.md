@@ -4,7 +4,7 @@ Expression and Velocity Integration
 
 ## Introduction
 <p align="center">
-  <img src="/doc/overview.png"/>
+  <img src="/doc/pipeline.png"/>
 </p>
 
 ```
