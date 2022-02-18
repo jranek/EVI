@@ -57,6 +57,8 @@ BiocManager::install("batchelor")
 BiocManager::install("scran")
 ```
 
+It's important to note that dynverse is a large collection of packages that requires many installs. If you run into issues, follow their installation guidelines here: [dynverse](https://dynverse.org/users/1-installation/)
+
 ## Data access
 Access the preprocessed loom or adata objects from [Zenodo](https://zenodo.org/record/6110279#.Yg1jPN_MK3C).
 
