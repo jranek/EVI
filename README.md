@@ -66,11 +66,13 @@ Access the preprocessed loom or adata objects from [Zenodo](https://zenodo.org/r
 
 ### Perform integration
 
+```
 model = evi.tl.EVI(adata = adata, x1key = x1key, x2key = x2key, X1 = X1, X2 = X2, int_method = int_method,
             int_method_params = int_method_params, eval_method = eval_method, eval_method_params = eval_method_params, logX1 = logX1,
             logX2 = logX2, labels_key = labels_key, labels = labels, n_jobs = n_jobs)
 
 W, embed = model.integrate()
+```
 
 ### Evaluate trajectory inference
 
