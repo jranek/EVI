@@ -1,0 +1,10 @@
+{
+    "terminal.integrated.defaultProfile.windows": "Command Prompt",
+    "r.rterm.linux": "C:\\Users\\Jolene\\miniconda3\\envs\\venv_EVI_base\\Lib\\R\\bin\\x64;C:\\Users\\Jolene\\miniconda3\\envs\\venv_EVI_base\\Lib\\R",
+    "r.rpath.linux": "C:\\Users\\Jolene\\miniconda3\\envs\\venv_EVI_base\\Lib\\R\\bin\\x64\\R.exe",
+    "r.rpath.windows": "C:\\Users\\Jolene\\miniconda3\\envs\\venv_EVI_base\\Lib\\R\\bin\\R.exe",
+    "git.ignoreWindowsGit27Warning": true,
+    "python.analysis.extraPaths": [
+        "C:\\Users\\Jolene\\Documents\\CompCy_lab\\EVI"
+    ]
+}
