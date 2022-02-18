@@ -15,49 +15,27 @@ git clone https://github.com/jranek/EVI.git
 
 ## Dependencies
 
-Creates an environment with most of the required packages.
+1. Create a conda environment with most of the required packages
 
 ```
 conda env create -f venv_EVI.yml
+```
+
+2. Activate the environment 
+
+```
 source activate venv_EVI
 ```
 
-A few python packages are unavailable through conda or pip. Upon creating the environment, we recommend that you install these manually. 
+3. Install the remaining dependencies
+
+A few python and R dependencies are unavailable through conda or pip. To install them, run the following make command.
 
 ```
-#precise v1.2
-pip install --user git+https://github.com/NKI-CCB/PRECISE
+make
 ```
 
-For R packages, open R/ Jupyter magic within the environment and run the following commands:
-
-```
-install.packages("devtools")
-install.packages("BiocManager")
-
-#dynverse/dyncli v0.0.3.9000
-devtools::install_github("dynverse/dyncli")
-
-#dynverse/dyno v0.1.2
-devtools::install_github("dynverse/dyno")
-
-#dynverse/dyneval v0.9.9
-devtools::install_github("dynverse/dyneval")
-
-#dynverse/dyntoy v0.9.9
-devtools::install_github("dynverse/dyntoy")
-
-#SingleCellExperiment v1.14.1
-BiocManager::install("SingleCellExperiment")
-
-#batchelor v1.8.0
-BiocManager::install("batchelor")
-
-#scran v1.20.1
-BiocManager::install("scran")
-```
-
-It's important to note that dynverse is a large collection of packages that requires many installs. If you run into issues, follow their installation guidelines here: [dynverse](https://dynverse.org/users/1-installation/)
+It's important to note that dynverse is a large collection of packages that requires many installs. If you run into install issues, follow their guidelines here: [dynverse](https://dynverse.org/users/1-installation/)
 
 ## Data access
 Access the preprocessed loom or adata objects from [Zenodo](https://zenodo.org/record/6110279#.Yg1jPN_MK3C).
