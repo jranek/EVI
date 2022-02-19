@@ -533,11 +533,6 @@ def ti(adata: AnnData,
     """
     adata_pred = evi.tl.convert(adata = adata, xkey = 'X', W = W, embedding = None, cluster_key = labels_key, clusters = labels)
 
-    # if type(n_dcs) is 'list':
-    #     n_dcs = n_dcs[0]
-    # if type(connectivity_cutoff) is 'list':
-    #     connectivity_cutoff = connectivity_cutoff[0]
-
     adata_pred, grouping, branch_progressions, branches, branch_network = evi.tl.run_paga(adata_pred,
                                                                                             cluster_key = 'labels',
                                                                                             root_cluster = root_cluster,
