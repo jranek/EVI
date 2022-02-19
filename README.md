@@ -9,36 +9,65 @@ Expression and Velocity Integration
 
 ## Installation
 
+* You can clone the git repository by, 
+
 ```
 git clone https://github.com/jranek/EVI.git
 ```
 
+* Once you've clone the repository, please change your working directory into this folder.
+
+```
+cd EVI
+```
+
 ## Dependencies
 
-1. Create a conda environment with most of the required packages
+Given that there are a number of required python and R packages for benchmarking evaluation, we recommend that you create a conda environment as follows. 
+
+* First, create the conda environment using the yml file. This contains most of the installation instructions.
 
 ```
 conda env create -f venv_EVI.yml
 ```
 
-2. Activate the environment 
+* Once the environment is created, you can activate it by,
 
 ```
 source activate venv_EVI
 ```
 
-3. Install the remaining dependencies
-
-A few python and R dependencies are unavailable through conda or pip. To install them, run the following make command.
+* Unfortunately, a few python and R packages are unavailable through the standard channels.
+* To install the remaining dependencies, we provide a makefile which contains python and R installation instructions. This must be done within the environment so make sure you have already activated it. 
+* Of note, this step installs a collection of `dynverse` packages required for trajectory inference evaluation. If you run into installation issues at this step (e.g. `API rate limit exceeded`), please follow their guidelines here: https://dynverse.org/users/1-installation/. 
+* To finish installation, run
 
 ```
 make
 ```
 
-It's important to note that dynverse is a large collection of packages that requires many installs. If you run into install issues, follow their guidelines here: [dynverse](https://dynverse.org/users/1-installation/)
-
 ## Data access
-Access the preprocessed loom or adata objects from [Zenodo](https://zenodo.org/record/6110279#.Yg1jPN_MK3C).
+You can download all of the preprocessed loom and h5ad files from the [Zenodo](https://zenodo.org/record/6110279#.Yg1jPN_MK3C) repository. This can be done directly from the website or through the terminal. 
+
+To list all of the publicly available files for download, 
+
+```
+from lxml import html
+import requests
+
+page = requests.get(f'https://zenodo.org/record/6110279#.Yg1jPN_MK3C')
+webpage = html.fromstring(page.content)
+hrefs = webpage.xpath('//a/@href')
+files = [i for i in hrefs if i.endswith('?download=1')]
+files = np.unique(files)
+print(files)
+```
+
+If you'd like to download an example dataset from the terminal, please specify both the zenodo url `https://zenodo.org/` and the dataset string identifier from above. 
+
+```
+curl 'https://zenodo.org/record/6110279/files/adata_lane.h5ad?download=1' --output adata_lane.h5ad
+```
 
 ## Tutorial
 
