@@ -10,6 +10,8 @@ from sklearn.model_selection import StratifiedShuffleSplit, StratifiedKFold, Gri
 from sklearn.metrics import f1_score, roc_auc_score, accuracy_score, precision_score, balanced_accuracy_score, confusion_matrix
 from sklearn.svm import SVC
 import os
+#os.environ["R_HOME"] = r"C:\Users\Jolene\miniconda3\envs\venv_EVI\Lib\R"
+#os.environ["PATH"]   = r"C:\Users\Jolene\miniconda3\envs\venv_EVI\Lib\R\bin\x64" + ";" + os.environ["PATH"]
 import rpy2.robjects as robjects
 from rpy2.robjects import pandas2ri
 import rpy2.rinterface_lib.callbacks
