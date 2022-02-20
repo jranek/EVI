@@ -61,9 +61,9 @@ To list all of the publicly available files for download,
 from lxml import html
 import requests
 
-page = requests.get(f'https://zenodo.org/record/6110279#.Yg1jPN_MK3C')
-webpage = html.fromstring(page.content)
-hrefs = webpage.xpath('//a/@href')
+r = requests.get(f'https://zenodo.org/record/6110279#.Yg1jPN_MK3C')
+content = html.fromstring(r.content)
+hrefs = content.xpath('//a/@href')
 files = [i for i in hrefs if i.endswith('?download=1')]
 files = np.unique(files)
 print(files)
@@ -72,7 +72,7 @@ print(files)
 If you'd like to download an example dataset from the terminal, please specify both the zenodo url `https://zenodo.org/` and the dataset string identifier from above. 
 
 ```
-curl 'https://zenodo.org/record/6110279/files/adata_lane.h5ad?download=1' --output adata_lane.h5ad
+curl https://zenodo.org/record/6110279/files/adata_lane.h5ad?download=1 --output adata_lane.h5ad
 ```
 
 ## Tutorial
