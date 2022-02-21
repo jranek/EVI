@@ -1,14 +1,13 @@
 # EVI
-
 Expression and Velocity Integration
 
 ## Introduction
+EVI is a python package designed for integrating temporal gene expression modalities and comparing method performance on trajectory inference and disease prediction tasks. For more details on the methods considered and the overall benchmarking pipeline, please read the associated preprint:
 
-## Pipeline overview
+## Overview
 <p align="center">
   <img src="/doc/pipeline.png"/>
 </p>
-
 
 ## Installation
 
