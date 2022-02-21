@@ -71,7 +71,7 @@ print(files)
 If you'd like to download an example dataset from the terminal, please specify both the zenodo url `https://zenodo.org/` and the dataset string identifier from above. 
 
 ```
-curl https://zenodo.org/record/6110279/files/adata_lane.h5ad?download=1 --output adata_lane.h5ad
+curl 'https://zenodo.org/record/6110279/files/adata_lane.h5ad?download=1' --output adata_lane.h5ad
 ```
 
 ## Tutorial
