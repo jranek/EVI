@@ -43,8 +43,8 @@ conda activate venv_EVI
 * To install the remaining dependencies, we provide a makefile which contains the python and R installation instructions. This must be done within the environment so make sure you have already activated it. 
 * Of note, this step installs `dynverse` which is a collection of R packages required for trajectory inference evaluation. It uses the GitHub API which is limited to 60 requests; therefore, you may run into an `API rate limit exceeded` installation error. To increase the rate limit and overcome this, you can follow their guidelines here: https://dynverse.org/users/1-installation/. Namely, 
     * Open R and generate a GitHub token with `usethis::create_github_token()`
-    * Copy the GitHub token and set your personal access token within R using the `usethis::edit_r_environ()` command. This will open a tab for which you can edit the GITHUB_PAT variable with your token, as `GITHUB_PAT = 'your_github_token'` 
-    * Close R
+    * Copy the GitHub token and set your personal access token within R using the `usethis::edit_r_environ()` command. This will open a tab for which you can set a GITHUB_PAT variable with your token by typing `GITHUB_PAT = 'your_github_token'` 
+    * Save the file and close R
 * To finish installation with the makefile, run
 
 ```
