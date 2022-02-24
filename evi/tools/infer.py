@@ -379,13 +379,10 @@ def construct_ground_trajectory(adata: AnnData,
     ground_trajectory.write_output(file = filename+'.h5ad')
     os.replace(filename+'.h5ad', os.path.join(directory,'ti',data_ident, adata_ident,filename+'.h5ad'))
     
-def add_ground_trajectory(directory: str = None,
-                          filename: str = None):
+def add_ground_trajectory(filename: str = None):
     """adds ground truth trajectory into memory.
-    directory: str (default = None)
-        String referring to the directory to save ground truth trajectory to
     filename: str (default = None)
-        String referring to the filename for saving
+        directory/filename referring of the trajectory h5ad object
     ----------
 
     Returns
@@ -397,8 +394,7 @@ def add_ground_trajectory(directory: str = None,
     r['source'](os.path.join('evi', 'tools', 'infer.R'))
     add_ground_trajectory_r = robjects.globalenv['add_ground_trajectory']
 
-    trajectory = add_ground_trajectory_r(directory = rpy2.robjects.vectors.StrVector([directory]),
-                                     filename = rpy2.robjects.vectors.StrVector([filename]))
+    trajectory = add_ground_trajectory_r(filename = rpy2.robjects.vectors.StrVector([filename]))
     return trajectory
 
 def run_paga(adata: AnnData,
