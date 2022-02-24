@@ -4,11 +4,11 @@ library("dyno")
 library("dyntoy")
 library("dyncli")
 
-add_ground_trajectory <- function(directory, filename){
+add_ground_trajectory <- function(filename){
 
     #creates ground truth trajectory from saved object
 
-    trajectory <- dynutils::read_h5(paste0(directory,'/', filename))
+    trajectory <- dynutils::read_h5(filename)
 
     trajectory$counts <- as.matrix(trajectory$counts, sparse = TRUE)
     trajectory$expression <- as.matrix(trajectory$expression, sparse = TRUE)
