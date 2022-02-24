@@ -54,8 +54,8 @@ class EVI(BaseEstimator):
                 self.dtype = self.x1key + '_' + self.x2key
                 self.dtype_total = self.x1key + '_' + self.x2key
 
-            self.W = W.copy()
-            self.embedding = embedding.copy()
+            self.W = W
+            self.embedding = embedding
             try: #if param sweep for evaluatation
                 params_e = list(ParameterGrid(self.eval_method_params))
                 for e in params_e:
