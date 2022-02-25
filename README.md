@@ -76,7 +76,7 @@ curl 'https://zenodo.org/record/6110279/files/adata_lane.h5ad?download=1' --outp
 ## Tutorial
 Given unspliced, spliced, or RNA velocity gene expression modalities, you can compare multi-modal data integration strategies using the evi class as follows. 
 
-This class provides two methods following instantiation, `integrate()` which can be used to integrate gene expression modalities and `evaluate_integrate` which can be used to evaluate a method's performance on a prediction task. 
+This class provides two methods following instantiation, `integrate()` which can be used to integrate gene expression modalities and `evaluate_integrate()` which can be used to evaluate a method's performance on a prediction task. 
 
 ```python
 # Parameters
@@ -96,7 +96,7 @@ This class provides two methods following instantiation, `integrate()` which can
 # eval_method_params: dictionary referring to the evaluation method hyperparameters
 # n_jobs: integer referring to the number of jobs to use in computation 
 
-# Attributes
+# Method attributes
 # ----------------------------
 # model.integrate()
 #    performs integration of gene expression modalities
@@ -123,21 +123,19 @@ df = model.evaluate_integrate()
 ```
 
 ### Perform integration
-Here we show you an example of how you can integrate gene expression modalities according to a multi-modal data integration strategy of interest. To do so, you must specify the data, whether the data should be log transformed, the integration method, and the integration method hyperparameters. For more details on integration method-specific hyperparameters, please see the input parameters in the `evi.tl.merge` script
+Here we show you an example of how you can use the evi class to integrate gene expression modalities according to a multi-modal data integration strategy of interest. We provide 9 functions to perform integration. Alternatively, if you'd like to integrate your data according to another method of interest, feel free to add the function to the `evi.tl.merge.py` script.
 
-We provide 9 functions to perform integration
-
-* `evi.tl.expression`- unintegrated spliced gene expression data
-* `evi.tl.concat_merge` - horizontal (cell-wise) concatenation of data modalities
+* `evi.tl.expression` - unintegrated spliced gene expression data
+* `evi.tl.concat_merge` - cell-wise (horizontal) concatenation of data modalities
 * `evi.tl.sum_merge` - cell-wise sum of data modalities
-* `evi.tl.cellrank` - implements cellrank merging of moments of spliced and RNA velocity modalities
-* `evi.tl.precise` - implements PRECISE merging, where data modality 1 is projected onto the sorted principal vectors 
-* `evi.tl.precise_consensus` - implements PRECISE merging, where data modality 1 is projected onto the consensus features of both modalities
-* `evi.tl.snf` - merges data modalities using Similarity Network Fusion (SNF)
-* `evi.tl.grassmann` - merges data modalities according to subspace analysis on a Grassmannian manifold
-* `evi.tl.integrated_diffusion` - merges data modalities using integrated diffusion 
+* `evi.tl.cellrank` - implements [cellrank](https://www.doi.org/10.1038/s41592-021-01346-6) for merging moments of spliced and RNA velocity modalities
+* `evi.tl.precise` - implements [PRECISE](https://www.doi.org/10.1093/bioinformatics/btz372) for merging gene expression modalities, where data modality one is projected onto the sorted principal vectors 
+* `evi.tl.precise_consensus` - implements [PRECISE](https://www.doi.org/10.1093/bioinformatics/btz372) for merging gene expression modalities, where data modality one is projected onto the consensus features
+* `evi.tl.snf` - implements [SNF](https://www.doi.org/10.1038/nmeth.2810) for merging gene expression modalities
+* `evi.tl.grassmann` - implements [Grassmann joint embedding](https://www.doi.org/10.1093/bioinformatics/bty866) for merging gene expression modalities
+* `evi.tl.integrated_diffusion` - implements [integrated diffusion](https://arxiv.org/pdf/2102.06757.pdf) for merging gene expression modalities
 
-Alternatively, if you'd like to integrate your data according to another method of interest, feel free to add the function to the `evi.tl.merge` script
+To perform integration, simply specify the data, whether an individual modality should be log transformed, the integration method, and the integration method hyperparameters. For more details on integration method-specific hyperparameters, please see the input parameters in the `evi.tl.merge.py` script.
 
 ```python
 # Example integrating spliced and unspliced modalities using PRECISE
@@ -149,5 +147,95 @@ W, embed = model.integrate()
 ```
 
 ### Evaluate trajectory inference
+In this study, we evaluated the performance of multi-modal data integration strategies on combining gene expression modalities to infer a biologically meaningful trajectory. To do so, we compare predicted trajectories to a ground truth reference trajectory curated from the literature. If you'd like to perform trajectory inference evaluation, please follow the steps below.
 
-### Evaluate classification 
+#### Step 1: Construct ground truth trajectory
+* If you have _a priori_ knowledge of known cellular transitions, you can construct a ground truth reference trajectory object for evaluation in [Dynverse](https://dynverse.org/) as follows.
+* First define a milestone network of known cell type transitions.
+
+```python
+
+milestone_network = pd.DataFrame({"from": ["LTHSC_broad", "MPP_broad", "MPP_broad","LMPP_broad","CMP_broad","CMP_broad"],
+                                  "to": ["MPP_broad", "CMP_broad", "LMPP_broad", "GMP_broad","MEP_broad","GMP_broad"],
+                                  "length": np.ones(shape = (1, 6)).flatten(),
+                                  "directed": np.repeat(True, 6)})
+
+```
+* Next, construct the ground truth reference trajectory h5ad object as, 
+
+```python
+
+# Parameters
+# ----------------------------
+# adata: annotated data object
+# cluster_key: string referring to the ground truth labels key in adata object
+# milestone_network: trajectory network consisting of groups and edges between them
+# counts: raw count matrix of ground truth data. If None uses the adata.layers['raw_spliced'] layer
+# expression: normalized and log transformed matrix of ground truth data. If None uses adata.X
+# group_ids: series object of cluster names for every cell. If None, uses cluster_key
+# cell_ids: series object of cell names. If None, uses adata.obs.index
+# feature_ids: series object of feature names. If None, uses adata.var_names
+# filename: string referring to the filename for saving
+
+evi.tl.construct_ground_trajectory(adata, cluster_key = 'cell_types_broad_cleaned', milestone_network = milestone_network,
+                                  counts = adata.layers['raw_spliced'], expression = adata.X, filename = 'gt_nestorowa')
+
+```
+#### Step 2: Add the ground truth trajectory
+*  Once the trajectory object is created and saved, you can use it at any point. Simply load the object into the R environment prior to evaluation as,
+
+```python
+ground_trajectory = evi.tl.add_ground_trajectory('gt_nestorowa.h5ad')
+```
+
+#### Step 3: Perform trajectory inference evaluation
+* In order to perform trajectory inference evaluation, you can use the `evaluate_integrate()` method in the evi class. 
+* This will first perform integration according to the integration method and integration method hyperparameters specified.
+* Next, it will perform evaluation according to the evaluation method and evaluation method parameters specified.
+* Since we are interested in performing trajectory inference using PAGA + DPT and evaluating the inferred biological trajectory from integrated data, we will specify the evaluation method as `evi.tl.ti` and the evaluation method parameters to include the root cell or cluster, the number of diffusion map components, and the ground truth reference trajectory we created above.
+
+```python
+
+# Example for trajectory inference performance following moments of spliced and RNA velocity integration using SNF:
+
+eval_method_params = {'root_cluster': 'LTHSC_broad', 'n_dcs': 20, 'connectivity_cutoff':0.05, 'root_cell': 646, 'ground_trajectory' = ground_trajectory}
+
+model = evi.tl.EVI(adata = adata, x1key = 'Ms', x2key = 'velocity',
+                    logX1 = False, logX2 = False, labels_key = 'cell_types_broad_cleaned',
+                    int_method = evi.tl.snf, int_method_params = {'k':10, 'mu':0.7, 'K': 50},
+                    eval_method = evi.tl.ti, eval_method_params = eval_method_params, n_jobs = -1)
+
+df = model.evaluate_integrate() #scores according to metrics in dynverse, where hmean refers to the trajectory inference correlation score of cell distance and feature importance score correlations
+```
+
+### Evaluate classification
+If you'd like to evaluate an integration method's performance on perturbation or disease state classification, we provide two strategies for doing so: label propagation and support vector machine classification. Alternatively, if you'd like to provide your own classification function, feel free to add it to the `evi.tl.infer.py` script.
+
+* To perform data integration followed by classification using label propagation, please specify (1) the evaluation method as `evi.tl.lp` and (2) the evaluation method parameters, including the ratio of training nodes to consider and the metrics to measure performance. 
+
+```python
+
+# Example for label propagation classification following moments of spliced and RNA velocity integration using concatenation:
+
+model = evi.tl.EVI(adata = adata, x1key = 'Ms', x2key = 'velocity', logX1 = False, logX2 = False,
+                   labels_key = 'condition_broad', int_method = evi.tl.concat_merge,
+                   int_method_params = {'k': 10}, eval_method = evi.tl.lp,
+                   eval_method_params = {'train_size': 0.5, 'random_state': 0, 'metrics': ['F1', 'balanced_accuracy', 'auc', 'precision', 'accuracy']}, n_jobs = -1)
+                   
+df = model.evaluate_integrate() #scores according to metrics in eval_method_params
+
+```
+
+* To perform data integration followed by classification using a support vector machine classifier, please specify (1) the evaluation method as `evi.tl.svm` and (2) the evaluation method parameters, including the metrics including the metrics to measure performance. 
+
+```python
+
+# Example for SVM classification using one data modality - spliced gene expression:
+
+model = evi.tl.EVI(adata = adata, x1key = 'spliced', logX1 = True, labels_key = 'condition_broad',
+                   int_method = evi.tl.expression, int_method_params = {'k': 10}, eval_method = evi.tl.svm,
+                   eval_method_params = {'random_state': 0, 'metrics': ['F1', 'balanced_accuracy', 'auc', 'precision', 'accuracy']}, n_jobs = -1)
+
+df = model.evaluate_integrate() #scores according to metrics in eval_method_params
+
+```
