@@ -85,7 +85,7 @@ class EVI(BaseEstimator):
         ----------------------------
         1. Example for SVM classification using one data modality - spliced gene expression:
 
-            model = evi.tl.EVI(adata = adata, x1key = 'spliced', x2key = None, logX1 = True, logX2 = False,
+            model = evi.tl.EVI(adata = adata, x1key = 'spliced', logX1 = True,
                                 labels_key = 'condition_broad', int_method = evi.tl.expression,
                                 int_method_params = {'k': 10}, eval_method = evi.tl.svm,
                                 eval_method_params = {'random_state': 0, 'metrics': ['F1', 'balanced_accuracy', 'auc', 'precision', 'accuracy']}, n_jobs = -1)

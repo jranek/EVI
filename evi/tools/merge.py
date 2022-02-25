@@ -1307,7 +1307,7 @@ def compute_grassmann_affinity(X = None,
     _W = []
     for i in range(X.shape[0]):
         w_ = np.zeros((1, X.shape[0]))
-        s = np.array([heat_kernel(dist_mat[i,v], t) for v in nn[i]] )
+        s = np.array([heat_kernel(dist_mat[i,v], t) for v in nn[i]])
         np.put(w_, nn[i], s)
         _W.append(w_[0])
 
