@@ -114,6 +114,11 @@ This class provides two methods following instantiation, `integrate()` which can
 # Default
 # ----------------------------
 
+import evi
+import scanpy as sc
+
+adata = sc.read_h5ad('filename.h5ad')
+
 model = evi.tl.EVI(adata = None, x1key = None, x2key = None, X1 = None, X2 = None, int_method = None,
             int_method_params = None, eval_method = None, eval_method_params = None, logX1 = None,
             logX2 = None, labels_key = None, labels = None, n_jobs = 1)
