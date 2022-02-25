@@ -56,7 +56,7 @@ You can download all of the preprocessed loom and h5ad files from the [Zenodo](h
 
 If you'd like to list all of the publicly available files for download,
 
-```
+```python
 from lxml import html
 import requests
 
