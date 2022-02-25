@@ -198,7 +198,7 @@ ground_trajectory = evi.tl.add_ground_trajectory('gt_nestorowa.h5ad')
 
 # Example for trajectory inference performance following moments of spliced and RNA velocity integration using SNF:
 
-eval_method_params = {'root_cluster': 'LTHSC_broad', 'n_dcs': 20, 'connectivity_cutoff':0.05, 'root_cell': 646, 'ground_trajectory' = ground_trajectory}
+eval_method_params = {'root_cluster': 'LTHSC_broad', 'n_dcs': 20, 'connectivity_cutoff':0.05, 'root_cell': 646, 'ground_trajectory': ground_trajectory}
 
 model = evi.tl.EVI(adata = adata, x1key = 'Ms', x2key = 'velocity',
                     logX1 = False, logX2 = False, labels_key = 'cell_types_broad_cleaned',
