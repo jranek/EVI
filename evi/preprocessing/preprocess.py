@@ -9,8 +9,6 @@ import numpy as np
 import scipy
 import seaborn as sns
 import matplotlib.pyplot as plt
-#os.environ["R_HOME"] = r"C:\Users\Jolene\miniconda3\envs\venv_EVI\Lib\R"
-#os.environ["PATH"]   = r"C:\Users\Jolene\miniconda3\envs\venv_EVI\Lib\R\bin\x64" + ";" + os.environ["PATH"]
 import rpy2.robjects as robjects
 from rpy2.robjects import pandas2ri
 import anndata2ri

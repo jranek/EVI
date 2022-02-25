@@ -10,8 +10,6 @@ from sklearn.model_selection import StratifiedShuffleSplit, StratifiedKFold, Gri
 from sklearn.metrics import f1_score, roc_auc_score, accuracy_score, precision_score, balanced_accuracy_score, confusion_matrix
 from sklearn.svm import SVC
 import os
-#os.environ["R_HOME"] = r"C:\Users\Jolene\miniconda3\envs\venv_EVI\Lib\R"
-#os.environ["PATH"]   = r"C:\Users\Jolene\miniconda3\envs\venv_EVI\Lib\R\bin\x64" + ";" + os.environ["PATH"]
 import rpy2.robjects as robjects
 from rpy2.robjects import pandas2ri
 import rpy2.rinterface_lib.callbacks
@@ -305,9 +303,6 @@ def construct_ground_trajectory(adata: AnnData,
                                 group_ids = None,
                                 cell_ids = None,
                                 feature_ids = None,
-                                directory: str = None,
-                                data_ident: str = None,
-                                adata_ident: str = None,
                                 filename: str = None):
     """constructs a ground truth reference trajectory for comparison.
 
@@ -319,21 +314,15 @@ def construct_ground_trajectory(adata: AnnData,
     milestone_network:
         Trajectory network consisting of groups and edges between them
     counts:
-        Raw count matrix of ground truth data
+        Raw count matrix of ground truth data. If None uses the adata.layers['raw_spliced'] layer
     expression:
-        Normalized and log transformed matrix of ground truth data
+        Normalized and log transformed matrix of ground truth data. If None uses adata.X
     group_ids:
-        Series object of cluster names for every cell
+        Series object of cluster names for every cell. If None, uses cluster_key
     cell_ids:
-        Series object of cell names 
+        Series object of cell names. If None, uses adata.obs.index
     feature_ids:
-        Series object of feature names
-    directory: str (default = None)
-        String referring to the directory to save ground truth trajectory to
-    data_ident: str (defult = None)
-        String referring to the data name for saving. ex - Schafflick
-    adata_ident: str (default = None)
-        String referring to the adata object name for saving. ex - adata_Schafflick 
+        Series object of feature names. If None, uses adata.var_names
     filename: str (default = None)
         String referring to the filename for saving
     ----------
@@ -375,9 +364,7 @@ def construct_ground_trajectory(adata: AnnData,
                                             counts = counts,
                                             expression = expression)
     
-    evi.pp.make_directory(os.path.join(directory, 'ti', data_ident, adata_ident))
     ground_trajectory.write_output(file = filename+'.h5ad')
-    os.replace(filename+'.h5ad', os.path.join(directory,'ti',data_ident, adata_ident,filename+'.h5ad'))
     
 def add_ground_trajectory(filename: str = None):
     """adds ground truth trajectory into memory.

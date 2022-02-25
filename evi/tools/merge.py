@@ -122,6 +122,8 @@ def concat_merge(adata: AnnData,
     """merges data types through horizontal concatenation.
 
     Parameters
+    adata: AnnData
+        Annotated data object
     x1key: str (default = 'Ms')
         string referring to the layer of first matrix. Can be X, Ms, spliced, unspliced, velocity, or None
     x2key: str (default = 'velocity')
@@ -177,6 +179,8 @@ def sum_merge(adata: AnnData,
     """merges data types through summing matrices.
 
     Parameters
+    adata: AnnData
+        Annotated data object
     x1key: str (default = 'Ms')
         string referring to the layer of first matrix. Can be X, Ms, spliced, unspliced, velocity, or None
     x2key: str (default = 'velocity')
@@ -587,7 +591,7 @@ def integrated_diffusion(adata: AnnData,
                         X2 = None,
                         logX1 = False,
                         logX2 = False,
-                        n_jobs: int = 8,
+                        n_jobs: int = 1,
                         **args):
     """merges data types through integrated diffusion: https://arxiv.org/pdf/2102.06757.pdf
        from integrated diffusion operator, powers and eigendecomposes
@@ -625,7 +629,7 @@ def integrated_diffusion(adata: AnnData,
         boolean referring to whether the first data type should be log transformed
     logX2: bool (default = False)
         boolean referring to whether the second data type should be log transformed
-    n_jobs: int (default = 10)
+    n_jobs: int (default = 1)
         number of jobs to use in computation 
     ----------
 
@@ -705,7 +709,7 @@ def grassmann(adata: AnnData,
                 X2 = None,
                 logX1 = False,
                 logX2 = False,
-                n_jobs: int = 10,
+                n_jobs: int = 1,
                 return_adj: bool = False,
                 **args):
     """merge data on grassmann manifold: https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6513164/
@@ -739,7 +743,7 @@ def grassmann(adata: AnnData,
         boolean referring to whether the first data type should be log transformed
     logX2: bool (default = False)
         boolean referring to whether the second data type should be log transformed
-    n_jobs: int (default = 8)
+    n_jobs: int (default = 1)
         number of jobs to use for distance computation
     return_adj: bool (default = False)
         whether to return adjacency matrix. If False, a kNN graph is constructed from the embedding
@@ -1136,7 +1140,7 @@ def compute_phate_clusters(X = None,
                             decay: int = 40,
                             n_clusters: int = None,
                             random_state:int = 0,
-                            n_jobs: int = 10,
+                            n_jobs: int = 1,
                             **args):
     """computes kmeans clustering on phate operator
 
@@ -1151,7 +1155,7 @@ def compute_phate_clusters(X = None,
         integer referring to the number of kmeans clusters for initialization
     random_state: int (default = 0)
         integer for reproducibility
-    n_jobs: int (default = 10)
+    n_jobs: int (default = 1)
         number of jobs to use
     ----------
 
@@ -1210,7 +1214,7 @@ def compute_diff_aff(X = None,
                         decay: int = 40,
                         distance: str = 'euclidean',
                         precomputed: str = None,
-                        n_jobs: int = 10,
+                        n_jobs: int = 1,
                         **args):
     """computes symmetric diffusion affinity matrix
 
@@ -1225,7 +1229,7 @@ def compute_diff_aff(X = None,
         distance metric for building kNN graph
     precomputed:
         string that denotes what type of graph if one is used as input. Can be either distance, affinity, adjacency, or None
-    n_jobs: int (default = 10)
+    n_jobs: int (default = 1)
         number of jobs to use in computation
     ----------
 
@@ -1275,7 +1279,7 @@ def compute_grassmann_affinity(X = None,
                                 k: int = 10,
                                 t: int = None,
                                 sym: str = 'max',
-                                n_jobs: int = -1,
+                                n_jobs: int = 1,
                                 **args):
     """compute grassmann affinity matrix using heat kernel
 
@@ -1288,7 +1292,7 @@ def compute_grassmann_affinity(X = None,
         integer referring to the scale of kernel bandwidth
     sym: str (default = 'max')
         string referring to how to symmetrize the data.
-    n_jobs: int (default = 8)
+    n_jobs: int (default = 1)
         number of jobs to use for distance computation
     ----------
 

@@ -4,23 +4,137 @@ import numpy as np
 from sklearn.base import BaseEstimator
 from sklearn.model_selection import ParameterGrid
 
-class EVI(BaseEstimator):  
+class EVI(BaseEstimator):
+    """Class for evaluating multi-modal data integration approaches for combining unspliced, spliced, and RNA velocity gene expression modalities
+
+        Parameters
+        ----------------------------
+        adata: AnnData
+            Annotated data object
+        x1key: str (default = None)
+            string referring to the layer of first matrix in the AnnData object. Can be X, Ms, spliced, unspliced, velocity, or None
+        x2key: str (default = None)
+            string referring to the layer of second matrix in the AnnData object. Can be X, Ms, spliced, unspliced, velocity, or None
+        X1: (default = None)
+            matrix referring to the first data type if x1key unspecified
+        X2: (default = None)
+            matrix referring to the second data type if x2key unspecified
+        logX1: bool (default = None)
+            boolean referring to whether the first data type should be log transformed. If data type is Ms or velocity, this should be False.
+        logX2: bool (default = None)
+            boolean referring to whether the second data type should be log transformed. If data type is Ms or velocity, this should be False.
+        labels_key: str (default = None)
+            string referring to the key in adata.obs of ground truth labels
+        labels: (default = None)
+            array referring to the labels for every cell
+        int_method: function (default = None)
+            function housed in the evi.tl.merge script that specifies the integration method to perform. Can be one of the following (or you may provide your own):
+                evi.tl.expression
+                evi.tl.moments
+                evi.tl.concat_merge
+                evi.tl.sum_merge
+                evi.tl.cellrank
+                evi.tl.snf
+                evi.tl.precise
+                evi.tl.precise_consensus
+                evi.tl.grassmann
+                evi.tl.integrated_diffusion
+        int_method_params: dictionary (default = None)
+            dictionary referring to the integration method hyperparameters. For more information on method-specific hyperparameters, see the evi.tl.merge script for the method of interest. Can be:
+                evi.tl.expression example: {'k': 10}
+                evi.tl.moments example: {'k': 10}
+                evi.tl.concat_merge example: {'k': 10}
+                evi.tl.sum_merge example: {'k': 10}
+                evi.tl.cellrank example: {'lam':0.7, 'scheme': 'correlation', 'mode':'deterministic'}
+                evi.tl.snf example: {'k': 10, 'mu' : 0.5, 'K': 50}
+                evi.tl.precise example: {'n_pvs': 30}
+                evi.tl.precise_consensus example: {'n_pvs': 30}
+                evi.tl.grassmann example: {'k': 10, 't' : 100, 'K': 50, 'lam': 1}
+                evi.tl.integrated_diffusion example: {'k': 10, 'n_clusters' : 5, 'K': 50}
+        eval_method: function (default = None)
+            function housed in the evi.tl.infer script that specifies the evaluation method to perform. Can be one of the following (or you may provide your own):
+                label propagation classification: evi.tl.lp
+                support vector machine classification: evi.tl.svm
+                trajectory inference evaluation: evi.tl.ti
+        eval_method_params: dictionary (default = None)
+            dictionary referring to the evaluation method hyperparameters. For more information on evaluation method -specific hyperparameters, see the evi.tl.infer script for the method of interest. Can be:
+                evi.tl.lp example: {'train_size': 0.5, 'random_state': 0, 'metrics': ['F1', 'balanced_accuracy', 'auc', 'precision', 'accuracy']}
+                evi.tl.svm example: {'random_state': 0, 'metrics': ['F1', 'balanced_accuracy', 'auc', 'precision', 'accuracy']}
+                evi.tl.ti example: {'root_cluster': root_cluster, 'n_dcs': 20, 'connectivity_cutoff':0.05, 'root_cell': 646, 'ground_trajectory': ground_trajectory} or
+                                   {'root_cluster': [root_cluster], 'n_dcs': [20], 'connectivity_cutoff':[0.05], 'root_cell':[646, 10, 389], 'ground_trajectory': [ground_trajectory]} 
+        n_jobs: int (default = 1)
+            number of jobs to use in computation 
+
+        Attributes
+        ----------------------------
+        model.integrate()
+            performs integration of gene expression modalities
+
+            Returns:
+                W: sparse graph adjacency matrix of combined data
+                embed: embedding of combined data
+
+
+        model.evaluate_integrate()
+            performs integration of gene expression modalities and then evaluates method according to the evaluation criteria or task of interest
+
+            Returns:
+                score_df: dataframe of classification or trajectory inferences scores
+
+        Examples
+        ----------------------------
+        1. Example for SVM classification using one data modality - spliced gene expression:
+
+            model = evi.tl.EVI(adata = adata, x1key = 'spliced', x2key = None, logX1 = True, logX2 = False,
+                                labels_key = 'condition_broad', int_method = evi.tl.expression,
+                                int_method_params = {'k': 10}, eval_method = evi.tl.svm,
+                                eval_method_params = {'random_state': 0, 'metrics': ['F1', 'balanced_accuracy', 'auc', 'precision', 'accuracy']}, n_jobs = -1)
+
+            W, embed = model.integrate()
+            df = model.evaluate_integrate()
+
+        2. Example for label propagation classification following spliced and unspliced integration using PRECISE:
+
+            model = evi.tl.EVI(adata = adata, x1key = 'spliced', x2key = 'unspliced', logX1 = True, logX2 = True,
+                                labels_key = 'condition_broad', int_method = evi.tl.precise,
+                                int_method_params = {'n_pvs': 30}, eval_method = evi.tl.lp,
+                                eval_method_params = {'train_size': 0.5, 'random_state': 0, 'metrics': ['F1', 'balanced_accuracy', 'auc', 'precision', 'accuracy']}, n_jobs = -1)
+
+            W, embed = model.integrate()
+            df = model.evaluate_integrate()
+            
+        3. Example for trajectory inference following integration of moments of spliced and RNA velocity data using SNF:
+
+            eval_method_params = {'root_cluster': 'LTHSC_broad', 'n_dcs': 20, 'connectivity_cutoff':0.05, 'root_cell': 646}
+
+            ground_trajectory = evi.tl.add_ground_trajectory('gt_nestorowa.h5ad') #add h5ad trajectory inference object
+
+            eval_method_params['ground_trajectory'] = ground_trajectory #append trajectory object to evaluation method dictionary
+
+            model = evi.tl.EVI(adata = adata, x1key = 'Ms', x2key = 'velocity',
+                                logX1 = False, logX2 = False, labels_key = 'cell_types_broad_cleaned',
+                                int_method = evi.tl.snf, int_method_params = {'k':10, 'mu':0.7, 'K': 50},
+                                eval_method = evi.tl.ti, eval_method_params = eval_method_params, n_jobs = -1)
+
+            df = model.evaluate_integrate()
+        ----------
+    """
     def __init__(
         self,
-        adata,
-        x1key,
-        x2key,
-        X1,
-        X2,
-        logX1,
-        logX2,
-        int_method,
-        int_method_params,
-        eval_method,
-        eval_method_params,
-        labels_key,
-        labels,
-        n_jobs,
+        adata=None,
+        x1key=None,
+        x2key=None,
+        X1=None,
+        X2=None,
+        logX1=None,
+        logX2=None,
+        int_method=None,
+        int_method_params=None,
+        eval_method=None,
+        eval_method_params=None,
+        labels_key=None,
+        labels=None,
+        n_jobs=1,
         **int_kwargs
     ):
         
