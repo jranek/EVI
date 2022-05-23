@@ -4,6 +4,8 @@ Expression and Velocity Integration
 ## Introduction
 EVI is a python package designed for evaluating multi-modal data integration strategies on combining unspliced, spliced, and RNA velocity gene expression modalities for trajectory inference and disease prediction tasks. For more details on the methods considered and the overall benchmarking pipeline, please read the associated preprint:
 
+[Ranek, J. S., Stanley, N., and Purvis, J. E. Integrating temporal single-cell gene expression modalities for trajectory inference and disease prediction. _bioRxiv_, March 2022.](https://doi.org/10.1101/2022.03.01.482381)
+
 ## Overview
 <p align="center">
   <img src="/doc/pipeline.png"/>
@@ -114,6 +116,11 @@ This class provides two methods following instantiation, `integrate()` which can
 # Default
 # ----------------------------
 
+import evi
+import scanpy as sc
+
+adata = sc.read_h5ad('filename.h5ad')
+
 model = evi.tl.EVI(adata = None, x1key = None, x2key = None, X1 = None, X2 = None, int_method = None,
             int_method_params = None, eval_method = None, eval_method_params = None, logX1 = None,
             logX2 = None, labels_key = None, labels = None, n_jobs = 1)
@@ -123,7 +130,7 @@ df = model.evaluate_integrate()
 ```
 
 ### Perform integration
-Here we show you an example of how you can use the evi class to integrate gene expression modalities according to a multi-modal data integration strategy of interest. We provide 9 functions to perform integration. Alternatively, if you'd like to integrate your data according to another method of interest, feel free to add the function to the `evi.tl.merge.py` script.
+Here we show you an example of how you can use the evi class to integrate gene expression modalities according to a multi-modal data integration strategy of interest. We provide 9 functions to perform integration. Alternatively, if you'd like to integrate your data according to another method of interest, feel free to add the function to the `merge.py` script.
 
 * `evi.tl.expression` - unintegrated spliced gene expression data
 * `evi.tl.concat_merge` - cell-wise (horizontal) concatenation of data modalities
@@ -135,7 +142,7 @@ Here we show you an example of how you can use the evi class to integrate gene e
 * `evi.tl.grassmann` - implements [Grassmann joint embedding](https://www.doi.org/10.1093/bioinformatics/bty866) for merging gene expression modalities
 * `evi.tl.integrated_diffusion` - implements [integrated diffusion](https://arxiv.org/pdf/2102.06757.pdf) for merging gene expression modalities
 
-To perform integration, simply specify the data, whether an individual modality should be log transformed, the integration method, and the integration method hyperparameters. For more details on integration method-specific hyperparameters, please see the input parameters in the `evi.tl.merge.py` script.
+To perform integration, simply specify the data, whether an individual modality should be log transformed, the integration method, and the integration method hyperparameters. For more details on integration method-specific hyperparameters, please see the input parameters in the `merge.py` script.
 
 ```python
 # Example integrating spliced and unspliced modalities using PRECISE
@@ -209,7 +216,7 @@ df = model.evaluate_integrate() #scores according to metrics in dynverse, where 
 ```
 
 ### Evaluate classification
-If you'd like to evaluate an integration method's performance on perturbation or disease state classification, we provide two strategies for doing so: label propagation and support vector machine classification. Alternatively, if you'd like to provide your own classification function, feel free to add it to the `evi.tl.infer.py` script.
+If you'd like to evaluate an integration method's performance on perturbation or disease state classification, we provide two strategies for doing so: label propagation and support vector machine classification. Alternatively, if you'd like to provide your own classification function, feel free to add it to the `infer.py` script.
 
 * To perform data integration followed by classification using label propagation, please specify (1) the evaluation method as `evi.tl.lp` and (2) the evaluation method parameters, including the ratio of training nodes to consider and the metrics to measure performance. 
 
