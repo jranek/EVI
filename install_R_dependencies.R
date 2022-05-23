@@ -9,6 +9,9 @@ BiocManager::install("SingleCellExperiment")
 #batchelor v1.8.0
 BiocManager::install("batchelor")
 
+#slingshot v2.0.0
+BiocManager::install("slingshot")
+
 #scran v1.20.1
 BiocManager::install("scran")
 
