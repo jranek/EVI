@@ -176,7 +176,7 @@ def run_multiBatchNorm(adata: AnnData,
         X = [adata.X.todense().transpose(), adata.layers['unspliced'].todense().transpose()]
     elif scipy.sparse.issparse(X[0]) or scipy.sparse.issparse(X[1]):
         X = [X[0].todense(), X[1].todense()]
-        
+
     if clusters is None:
         clusters = _compute_clusters(adata, log_transform = True, n_pcs = n_pcs, k = k, resolution = resolution)
         
@@ -336,7 +336,7 @@ def run_mnnCorrect(adata: AnnData,
     batches: list (default = None)
         list referring to batch condition of every cell. Dimensions must be (1 x cells) 
     batch_correct_flavor: str (default = 'concat')
-        str can either be hansen or concat. if hansen, this takes the sum.
+        string referring to type of correction. Can be hansen or concat where hansen is sum and concat is concatenation
     ----------
 
     Returns
@@ -400,7 +400,7 @@ def run_combat(adata: AnnData,
     batches: list (default = None)
         list referring to batch condition of every cell. Dimensions must be (1 x cells) 
     batch_correct_flavor: str (default = None)
-        string referring to type of correction. Can be None, hansen, concat
+        string referring to type of correction. Can be hansen or concat where hansen is sum and concat is concatenation
     ----------
 
     Returns
@@ -431,6 +431,76 @@ def run_combat(adata: AnnData,
 
     sc.pp.combat(adata_pp, key = 'batch')
     X_corr = adata_pp.X.copy()
+                         
+    if batch_correct_flavor == 'hansen':
+        X1_corr, X2_corr = _from_hansen(X_corr, M, R)
+    elif batch_correct_flavor == 'concat':
+        X1_corr, X2_corr = _from_concat(X_corr)
+
+    adata.X = scipy.sparse.csr_matrix(X1_corr) #reset layers, this is corrected data which is in log space
+    adata.layers['spliced'] = scipy.sparse.csr_matrix(np.expm1(X1_corr)) #spliced and unspliced matrices are scaled but not log transformed so invert
+    adata.layers['unspliced'] = scipy.sparse.csr_matrix(np.expm1(X2_corr))
+    
+    return adata
+
+def run_scanorama(adata: AnnData,
+                    X: list = None,
+                    batches: list = None,
+                    batch_correct_flavor: str = 'concat'):
+    """performs batch effect correction on spliced and unspliced data using scanorama: https://www.nature.com/articles/s41587-019-0113-3
+
+    Parameters
+    adata: AnnData
+        Annotated data object
+    X: list (default = None)
+        list of spliced and unspliced normalized counts. Should be log transformed for mnn. 
+            If provided: dimensions must be [(genes, cells), (genes, cells)].
+            If not provided: X, unspliced layers will be used
+    batches: list (default = None)
+        list referring to batch condition of every cell. Dimensions must be (1 x cells) 
+    batch_correct_flavor: str (default = None)
+        string referring to type of correction. Can be hansen or concat where hansen is sum and concat is concatenation
+    ----------
+
+    Returns
+    adata: AnnData
+        batch corrected annotated adata object.
+            adata.X: log transformed corrected spliced counts
+            adata.layers['spliced']: corrected spliced counts
+            adata.layers['unspliced']: corrected unspliced counts
+
+    ----------
+    """
+    import scanorama
+    if X is None:
+        X = [adata.X.todense(), adata.layers['unspliced'].todense()]
+    elif scipy.sparse.issparse(X[0]) or scipy.sparse.issparse(X[1]):
+        X = [X[0].todense(), X[1].todense()]
+
+    if batch_correct_flavor == 'hansen':
+        sys.stdout.write('performing batch effect correction with scanorama using hansen'+'\n')
+        M, R = _to_hansen(X)
+    elif batch_correct_flavor == 'concat':
+        sys.stdout.write('performing batch effect correction with scanorama using concatentation'+'\n')
+        M = _to_concat(X)
+    else:
+        sys.stderr.write('batch effect correction flavor not recognized'+'\n')
+
+    adata_pp = AnnData(M)
+    adata_pp.obs['batch'] = batches.copy()
+
+    adatas = []
+
+    for batch in np.unique(adata_pp.obs['batch']):
+        batch_ind = np.where(adata_pp.obs['batch'] == batch)[0]
+        adata_batch = adata_pp[batch_ind, :]
+        adatas.append(adata_batch)
+
+    scanorama_int = scanorama.correct_scanpy(adatas)
+    scanorama_corr = [ad.X.todense() for ad in scanorama_int]
+
+    # make into one matrix.
+    X_corr = np.concatenate(scanorama_corr)
                          
     if batch_correct_flavor == 'hansen':
         X1_corr, X2_corr = _from_hansen(X_corr, M, R)
@@ -615,6 +685,8 @@ def preprocess(adata: AnnData,
         adata = run_mnnCorrect(adata = adata, X = X, batches = adata.obs['batch'].values.tolist(), batch_correct_flavor = batch_correct_flavor) #this log transforms X
     elif batch_correct_method == 'combat':
         adata = run_combat(adata = adata, X = X, batches = adata.obs['batch'].values.tolist(),batch_correct_flavor = batch_correct_flavor) #this log transforms X
+    elif batch_correct_method == 'scanorama':
+        adata = run_scanorama(adata = adata, X = X, batches = adata.obs['batch'].values.tolist(),batch_correct_flavor = batch_correct_flavor) #this log transforms X
     else:
         sys.stdout.write('log transforming'+'\n')
         adata.X = scipy.sparse.csr_matrix.log1p(adata.X)
