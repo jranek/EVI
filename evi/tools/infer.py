@@ -251,7 +251,7 @@ def svm(adata: AnnData,
 
     le = LabelEncoder()
     y = le.fit_transform(adata_pred.obs['labels']).astype(int)
-    X = adata_pred.obsm['embedding'].copy()
+    X = np.asarray(adata_pred.obsm['embedding'])
     scaler = StandardScaler()
     X_scaled = scaler.fit_transform(X)
     n_classes = len(np.unique(adata_pred.obs['labels']))
@@ -384,6 +384,29 @@ def add_ground_trajectory(filename: str = None):
     trajectory = add_ground_trajectory_r(filename = rpy2.robjects.vectors.StrVector([filename]))
     return trajectory
 
+def run_angle(adata: AnnData,
+            embedding = None, 
+            **args):
+    """Estimates pseudotime using the angle between two dimensional embedding (joint or individual)
+
+    Parameters
+    adata: AnnData
+        Annotated data object
+    embedding: str (default = 'embedding)
+        matrix of the joint or individual embedding
+    ----------
+
+    Returns
+    pseudotime: pd.DataFrame
+        dataframe containing cell progression
+    ----------
+    """
+    embedding_subset = np.asarray(embedding)[:, :2]
+    pseudotime = np.arctan(embedding_subset[:,1], embedding_subset[:,0]) / 2 / np.pi + 0.5
+    pseudotime = pd.DataFrame({'cell_id': adata.obs.index, 'pseudotime':pseudotime})
+            
+    return pseudotime
+
 def run_paga(adata: AnnData,
             cluster_key: str = None,
             root_cluster: str = None,
@@ -469,17 +492,17 @@ def run_paga(adata: AnnData,
             
     return adata, grouping, branch_progressions, branches, branch_network
 
-def ti(adata: AnnData,
-        W = None,
-        ground_trajectory = None,
-        labels_key: str = None,
-        labels: list = None,
-        root_cluster: str = None,
-        root_cell: int = None,
-        n_dcs: int = None,
-        connectivity_cutoff: float = 0.05,
-        model: str = 'v1.0',
-        **args):
+def ti_paga(adata: AnnData,
+            W = None,
+            ground_trajectory = None,
+            labels_key: str = None,
+            labels: list = None,
+            root_cluster: str = None,
+            root_cell: int = None,
+            n_dcs: int = None,
+            connectivity_cutoff: float = 0.05,
+            model: str = 'v1.0',
+            **args):
 
     """performs trajectory inference with PAGA and dpt to obtain a predicted trajectory. 
         predicted and reference trajectories are then evalauted with dynverse framework
@@ -490,7 +513,7 @@ def ti(adata: AnnData,
     W: 
         Matrix referring to the connectivity graph
     ground_trajectory:
-        Dynverse trajectory object referring to ground truth reference
+        string referring to the h5ad trajectory inference dynverse object filename
     labels_key: str (default = None)
         String referring to adata object obs value with cluster information
     labels: list (default = None)
@@ -533,6 +556,99 @@ def ti(adata: AnnData,
                                        pandas2ri.py2rpy(branches),
                                        pandas2ri.py2rpy(branch_network),
                                        ground_trajectory)
+
+    scores = result_r[0]
+    metric_labels = result_r[1]
+
+    return scores, metric_labels
+
+def ti_slingshot(adata: AnnData,
+                embedding = None,
+                ground_trajectory = None,
+                labels_key: str = None,
+                labels: list = None,
+                root_cluster: str = None,
+                add_noise: bool = False,
+                **args):
+    """performs trajectory inference using slingshot: https://bmcgenomics.biomedcentral.com/articles/10.1186/s12864-018-4772-0
+        code pulled and modified from the dynverse container: https://github.com/dynverse/ti_slingshot/blob/master/package/R/ti_slingshot.R
+        predicted and reference trajectories are then evalauted with dynverse framework
+
+    Parameters
+    adata: AnnData
+        Annotated data object
+    embedding: 
+        Matrix referring to the joint embedding
+    ground_trajectory:
+        string referring to the h5ad trajectory inference dynverse object filename
+    labels_key: str (default = None)
+        String referring to adata object obs value with cluster information
+    labels: list (default = None)
+        List of clusters annotations for every cell
+    root_cluster: str (default = None)
+        String referring to the starting root population
+    add_noise: bool (default = False)
+        Boolean referring whether or not to add a small amount of noise to integrated embedding 
+    ----------
+
+    Returns
+    scores: 
+        score values following evaluation 
+    metric_labels:
+        labels of metrics used following evaluation 
+    ----------
+    """
+    labels = adata.obs[labels_key]
+    embedding = pd.DataFrame(embedding, index = adata.obs.index)
+
+    r = robjects.r
+    r['source'](os.path.join('evi', 'tools', 'infer.R'))
+    perform_evaluation_slingshot_r = robjects.globalenv['perform_evaluation_slingshot']
+
+    result_r = perform_evaluation_slingshot_r(pandas2ri.py2rpy(embedding),
+                                            pandas2ri.py2rpy(labels),
+                                            root_cluster,
+                                            ground_trajectory,
+                                            add_noise)
+
+    scores = result_r[0]
+    metric_labels = result_r[1]
+
+    return scores, metric_labels
+
+
+def ti_angle(adata: AnnData,
+            embedding = None,
+            ground_trajectory = None,
+            **args):
+    """performs trajectory inference by computing the angle between the first two joint embedding vectors to obtain a predicted trajectory. 
+        predicted and reference trajectories are then evalauted with dynverse framework
+
+    Parameters
+    adata: AnnData
+        Annotated data object
+    embedding: 
+        Matrix referring to the joint embedding
+    ground_trajectory:
+        string referring to the h5ad trajectory inference dynverse object filename
+    ----------
+
+    Returns
+    scores: 
+        score values following evaluation 
+    metric_labels:
+        labels of metrics used following evaluation 
+    ----------
+    """
+    pseudotime = run_angle(adata,
+                           embedding = embedding)
+    
+    r = robjects.r
+    r['source'](os.path.join('evi', 'tools', 'infer.R'))
+    perform_evaluation_angle_r = robjects.globalenv['perform_evaluation_angle']
+
+    result_r = perform_evaluation_angle_r(pandas2ri.py2rpy(pseudotime),
+                                        ground_trajectory)
 
     scores = result_r[0]
     metric_labels = result_r[1]

@@ -15,6 +15,13 @@ from sklearn.decomposition import PCA
 import scipy
 from scipy.stats import ks_2samp
 from scipy.linalg import *
+import os
+import rpy2.robjects as robjects
+from rpy2.robjects import pandas2ri
+import anndata2ri
+
+pandas2ri.activate()
+anndata2ri.activate()
 
 def expression(adata: AnnData,
                 x1key: str = 'X',
@@ -63,7 +70,7 @@ def expression(adata: AnnData,
 
     adata_pp = AnnData(X1)
     sc.tl.pca(adata_pp, n_comps = n_pcs, zero_center = True, svd_solver = 'arpack', random_state = 0) #random state set
-    scv.pp.neighbors(adata_pp, n_neighbors=k, n_pcs=n_pcs)
+    sc.pp.neighbors(adata_pp, n_neighbors=k, n_pcs=n_pcs)
     W = check_symmetric(W = adata_pp.obsp['connectivities'])
     embedding = np.asarray(adata_pp.obsm['X_pca'])
 
@@ -103,7 +110,7 @@ def moments(adata: AnnData,
     adata_.obs_names = adata.obs_names.copy()
     adata_.var_names = adata.var_names.copy()
     sc.pp.pca(adata_, n_comps = n_pcs, zero_center = True, svd_solver = 'arpack', random_state = 0)
-    scv.pp.neighbors(adata_, n_neighbors = k, n_pcs = n_pcs, knn = True, random_state = 0)
+    sc.pp.neighbors(adata_, n_neighbors = k, n_pcs = n_pcs, knn = True, random_state = 0)
     W = check_symmetric(W = adata_.obsp['connectivities'])
     embedding = np.asarray(adata_.obsm['X_pca'])
     return W, embedding
@@ -160,7 +167,7 @@ def concat_merge(adata: AnnData,
     adata_merge.obs_names = adata.obs_names.copy()
     adata_merge.var_names = np.concatenate([adata.var_names, adata.var_names])
     sc.pp.pca(adata_merge, n_comps = n_pcs, zero_center = True, svd_solver = 'arpack', random_state = 0)
-    scv.pp.neighbors(adata_merge, n_neighbors = k, n_pcs = n_pcs, knn = True, random_state = 0)
+    sc.pp.neighbors(adata_merge, n_neighbors = k, n_pcs = n_pcs, knn = True, random_state = 0)
     W = check_symmetric(W = adata_merge.obsp['connectivities']) #will convert to sparse 
     embedding = np.asarray(adata_merge.obsm['X_pca'])
 
@@ -217,7 +224,7 @@ def sum_merge(adata: AnnData,
     adata_merge.obs_names = adata.obs_names.copy()
     adata_merge.var_names = adata.var_names.copy()
     sc.pp.pca(adata_merge, n_comps = n_pcs, zero_center = True, svd_solver = 'arpack', random_state = 0)
-    scv.pp.neighbors(adata_merge, n_neighbors = k, n_pcs = n_pcs, knn = True, random_state = 0)
+    sc.pp.neighbors(adata_merge, n_neighbors = k, n_pcs = n_pcs, knn = True, random_state = 0)
     W = check_symmetric(W = adata_merge.obsp['connectivities'])
     embedding = np.asarray(adata_merge.obsm['X_pca'])
     return W, embedding
@@ -477,7 +484,7 @@ def precise_consensus(adata: AnnData,
     adata_joint.obs_names = adata.obs_names.values.copy()
     adata_joint.var_names = adata.var_names.values.copy()
     adata_joint.obsm['X_pca'] = np.asarray(joint_pca)
-    scv.pp.neighbors(adata_joint, n_neighbors=k, n_pcs=abs(n_pvs)) #compute nn 
+    sc.pp.neighbors(adata_joint, n_neighbors=k, n_pcs=abs(n_pvs)) #compute nn 
 
     W = adata_joint.obsp['connectivities'].copy()
     W = check_symmetric(W) #make symmetric if applicable
@@ -567,7 +574,7 @@ def precise(adata: AnnData,
     adata_joint.obs_names = adata.obs_names.values.copy()
     adata_joint.var_names = adata.var_names.values.copy()    
     adata_joint.obsm['X_pca'] = np.array(PC_joint)
-    scv.pp.neighbors(adata_joint, n_neighbors=k, n_pcs=abs(n_pvs))
+    sc.pp.neighbors(adata_joint, n_neighbors=k, n_pcs=abs(n_pvs))
     
     W = adata_joint.obsp['connectivities'].copy()
     W = check_symmetric(W) #make symmetric if applicable
@@ -802,6 +809,189 @@ def grassmann(adata: AnnData,
                 
         return W, embedding
 
+def mofap(adata: AnnData,
+        x1key: str = 'Ms',
+        x2key: str = 'velocity',
+        X1 = None,
+        X2 = None,
+        logX1: bool = False,
+        logX2: bool = False,
+        K: int = 20,
+        k: int = 10, 
+        random_state: int = 0,
+        groups_key = None,
+        **args):
+    """merges data types with MOFA+ : https://genomebiology.biomedcentral.com/articles/10.1186/s13059-020-02015-1
+        using mofapy2 package: https://github.com/bioFAM/mofapy2 and analysis with mofax:https://github.com/bioFAM/mofax
+
+    Parameters
+    adata: AnnData
+        Annotated data object
+    x1key: str (default = 'Ms')
+        string referring to the layer of first matrix. Can be X, Ms, spliced, unspliced, velocity, or None
+    x2key: str (default = 'velocity')
+        string referring to the layer of second matrix. Can be X, Ms, spliced, unspliced, velocity, or None
+    X1: (default = None)
+        matrix referring to the first data type
+    X2: (default = None)
+        matrix referring to the second data type
+    logX1: bool (default = False)
+        boolean referring to whether the first data type should be log transformed
+    logX2: bool (default = False)
+        boolean referring to whether the second data type should be log transformed
+    K: int (default = 20)
+        number of factors to include
+    k: int (default = 20)
+        number of nearest neighbors for knn graph in MOFA embedding
+    groups_key: str (default = None)
+        key in adata.obs specifying the multi-group analysis. if none, defaults to same group and original MOFA analysis
+    random_state: int (default = 0)
+        random seed
+    ----------
+
+    Returns
+    W: ndarray
+        sparse symmetric adjacency matrix from knn. Dimensions cells x cells
+    embedding: 
+        MOFA embedding. Dimensions cells x n_pcs 
+    ----------
+    """  
+    from mofapy2.run.entry_point import entry_point
+    import mofax as mfx
+    import random
+    import string
+    
+    adata.obs_names_make_unique() #if some cell names are the same, this will throw an error in MOFA as giving duplicates when they aren't
+    adata.var_names_make_unique()
+
+    X1, X2 = check_inputs(adata, x1key = x1key, x2key = x2key, X1 = X1, X2 = X2)
+    X1, X2 = check_log(X1 = X1, X2 = X2, logX1 = logX1, logX2 = logX2)
+    X1, X2 = check_sparse(X1 = X1, X2 = X2, return_sparse = False)
+
+    df1 = pd.DataFrame(X1, index = adata.obs_names, columns = adata.var_names)
+    df2 = pd.DataFrame(X2, index = adata.obs_names, columns = adata.var_names)
+
+    if groups_key is None:
+        groups = 'group_0'
+    else:
+        groups = adata.obs[groups_key]
+
+    df1 = pd.DataFrame(X1, index = adata.obs_names, columns = adata.var_names)
+    df1['group'] = groups
+    df1['view'] = x1key
+    df2 = pd.DataFrame(X2, index = adata.obs_names, columns = adata.var_names)
+    df2['group'] = groups
+    df2['view'] = x2key
+
+    df1 = df1.melt(ignore_index = False, id_vars = ['group', 'view'])
+    df2 = df2.melt(ignore_index = False, id_vars = ['group', 'view'])
+
+    df = pd.concat([df1, df2], axis = 0, ignore_index = False)
+    df.reset_index(inplace = True)
+
+    df.rename(columns={"index": "sample", "Gene": "feature", "value": "value", "view": "view", "group": "group"}, inplace = True)
+
+    ent = entry_point()
+    ent.set_data_options(scale_groups = False, scale_views = True)
+    ent.set_data_df(df)
+    ent.set_model_options(factors = K, spikeslab_weights = True)
+    ent.set_train_options(iter = 500, convergence_mode = "fast", startELBO = 1, freqELBO = 1, gpu_mode = False, verbose = False, seed = random_state)
+        
+    ent.build()
+    ent.run()
+
+    #saves, then deletes mofa object temporarily in order to access factor matrix
+    tmp_filename = ''.join(random.choices(string.ascii_lowercase, k=5))
+    ent.save(tmp_filename+'.hdf5')
+    model = mfx.mofa_model(tmp_filename+".hdf5")
+    embedding = model.get_factors(factors=range(0, K), df=True)
+    model.close()
+    os.remove(tmp_filename+".hdf5")
+
+    adata_joint = AnnData(adata.X)
+    adata_joint.obs_names = adata.obs_names.values.copy()
+    adata_joint.var_names = adata.var_names.values.copy()
+    adata_joint.obsm['X_mofa'] = np.asarray(embedding)
+
+    sc.pp.neighbors(adata_joint, n_neighbors = k, use_rep = 'X_mofa') #compute nn using the mofa embedding
+
+    W = adata_joint.obsp['connectivities'].copy()
+    W = check_symmetric(W) #make symmetric if applicable
+
+    return W, embedding
+
+def seurat_v4(adata: AnnData,
+            x1key: str = 'Ms',
+            x2key: str = 'velocity',
+            X1 = None,
+            X2 = None,
+            logX1 = False,
+            logX2 = False,
+            k: int = 10,
+            n_pcs: int = 50,
+            **args):
+    """merge data using Seurat v4 WNN graph: https://www.cell.com/cell/pdf/S0092-8674(21)00583-3.pdf
+
+    https://www.rdocumentation.org/packages/Seurat/versions/4.1.1/topics/FindMultiModalNeighbors
+
+    Parameters
+    adata: AnnData
+        Annotated data object
+    x1key: str (default = 'Ms')
+        string referring to the layer of first matrix. Can be X, Ms, spliced, unspliced, velocity, or None
+    x2key: str (default = 'velocity')
+        string referring to the layer of second matrix. Can be X, Ms, spliced, unspliced, velocity, or None 
+    X1: (default = None)
+        matrix referring to the first data type
+    X2: (default = None)
+        matrix referring to the second data type
+    logX1: bool (default = False)
+        boolean referring to whether the first data type should be log transformed
+    logX2: bool (default = False)
+        boolean referring to whether the second data type should be log transformed
+    k: int (default = None)
+        number of nearest neighbors to include for graph
+    n_jobs: int (default = 1)
+        number of jobs to use for distance computation
+    ----------
+
+    Returns
+    W: ndarray
+        sparse symmetric adjacency matrix from WNN. Dimensions cells x cells
+    embedding: None
+    ----------
+    """   
+    adata.obs_names_make_unique() #make cell names different if they aren't already
+    adata.var_names_make_unique()
+    X1, X2 = check_inputs(adata, x1key = x1key, x2key = x2key, X1 = X1, X2 = X2)
+    X1, X2 = check_log(X1 = X1, X2 = X2, logX1 = logX1, logX2 = logX2)
+    X1, X2 = check_sparse(X1 = X1, X2 = X2, return_sparse = False)
+
+    adata_x1 = AnnData(X1)
+    adata_x2 = AnnData(X2)
+
+    sc.tl.pca(adata_x1, n_comps = n_pcs)
+    sc.tl.pca(adata_x2, n_comps = n_pcs)
+
+    X1 = pd.DataFrame(X1, index = adata.obs_names, columns = adata.var_names)
+    X2 = pd.DataFrame(X2, index = adata.obs_names, columns = adata.var_names)
+    X1_pca = pd.DataFrame(adata_x1.obsm['X_pca'], index = adata.obs_names)
+    X2_pca = pd.DataFrame(adata_x2.obsm['X_pca'], index = adata.obs_names)
+
+    r = robjects.r
+    r['source'](os.path.join('evi', 'tools', 'merge.R'))
+    seurat_v4_r = robjects.globalenv['seurat_v4']
+
+    result_r = seurat_v4_r(pandas2ri.py2rpy(X1),
+                        pandas2ri.py2rpy(X2),
+                        pandas2ri.py2rpy(X1_pca),
+                        pandas2ri.py2rpy(X2_pca),
+                        k)
+    W = result_r
+    W = scipy.sparse.csr_matrix(W)
+    W = check_symmetric(W) #make symmetric if applicable
+
+    return W, None
 
 def check_inputs(adata: AnnData,
                 x1key: str = 'Ms',

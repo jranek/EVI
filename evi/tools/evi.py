@@ -39,6 +39,8 @@ class EVI(BaseEstimator):
                 evi.tl.precise_consensus
                 evi.tl.grassmann
                 evi.tl.integrated_diffusion
+                evi.tl.mofap
+                evi.tl.seurat_v4
         int_method_params: dictionary (default = None)
             dictionary referring to the integration method hyperparameters. For more information on method-specific hyperparameters, see the evi.tl.merge script for the method of interest. Can be:
                 evi.tl.expression example: {'k': 10}
@@ -51,6 +53,8 @@ class EVI(BaseEstimator):
                 evi.tl.precise_consensus example: {'n_pvs': 30}
                 evi.tl.grassmann example: {'k': 10, 't' : 100, 'K': 50, 'lam': 1}
                 evi.tl.integrated_diffusion example: {'k': 10, 'n_clusters' : 5, 'K': 50}
+                evi.tl.mofap example: {'K': 50}
+                evi.tl.seurat_v4 example: {'k': 10}
         eval_method: function (default = None)
             function housed in the evi.tl.infer script that specifies the evaluation method to perform. Can be one of the following (or you may provide your own):
                 label propagation classification: evi.tl.lp
@@ -199,8 +203,14 @@ class EVI(BaseEstimator):
         return scores, metric_labels
     
     def _aggregate(self):
-        p1 = self._param(self.int_kwargs)
-        p2 = self._param(self.eval_kwargs)
+        if len(self.int_kwargs) != 0:
+            p1 = self._param(self.int_kwargs)
+        else:
+            p1 = 'default_int_params'
+        if len(self.eval_kwargs)  != 0:
+            p2 = self._param(self.eval_kwargs)
+        else:
+            p2 = 'default_eval_params'
         p = str(self.int_method.__name__) + '_' + self.dtype + '_' + p1 + '_'+ str(self.eval_method.__name__) + '_' + p2
         self.score_df = pd.concat([self.score_df.reset_index(drop=True), pd.DataFrame(self.scores, columns = [p])], axis = 1)
 
