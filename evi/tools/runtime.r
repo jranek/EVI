@@ -1,8 +1,14 @@
-seurat_v4_rt <- function(X1, X2, X1_pca, X2_pca, k){
-    library("Seurat")
-    library("future")
-    
-    plan("multiprocess")
+library("Seurat")
+library("future")
+
+plan("multiprocess")
+
+seurat_v4_rt <- function(k){
+
+    X1 = read.csv('X1.csv', header = TRUE, row.names = 1)
+    X2 = read.csv('X2.csv', header = TRUE, row.names = 1)
+    X1_pca = read.csv('X1_pca.csv', header = TRUE, row.names = 1)
+    X2_pca = read.csv('X2_pca.csv', header = TRUE, row.names = 1)
 
     tic = Sys.time()
     combined <- CreateSeuratObject(counts = t(X1), assay='x1')

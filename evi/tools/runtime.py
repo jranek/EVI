@@ -41,8 +41,6 @@ def concat_merge_rt(adata: AnnData,
 
     tic = time.perf_counter()
     X_merge = scipy.sparse.hstack((X1, X2)) #n x 2*p
-    adata_merge = AnnData(X_merge)
-    sc.tl.pca(adata_merge, n_comps = 50)
     toc = time.perf_counter()
 
     elapsed = toc-tic
@@ -64,8 +62,6 @@ def sum_merge_rt(adata: AnnData,
 
     tic = time.perf_counter()
     X_merge = X1 + X2 #n x p
-    adata_merge = AnnData(X_merge)
-    sc.tl.pca(adata_merge, n_comps = 50)
     toc = time.perf_counter()
     elapsed = toc-tic
 
@@ -448,17 +444,23 @@ def seurat_v4_rt(adata: AnnData,
     toc = time.perf_counter()
     elapsed_1 = toc-tic
 
+    X1.to_csv('X1.csv')
+    X2.to_csv('X2.csv')
+    X1_pca.to_csv('X1_pca.csv')
+    X2_pca.to_csv('X2_pca.csv')
+
     r = robjects.r
     r['source'](os.path.join('evi', 'tools', 'runtime.R'))
     seurat_v4_rt_r = robjects.globalenv['seurat_v4_rt']
 
-    result_r = seurat_v4_rt_r(pandas2ri.py2rpy(X1),
-                        pandas2ri.py2rpy(X2),
-                        pandas2ri.py2rpy(X1_pca),
-                        pandas2ri.py2rpy(X2_pca),
-                        k)
+    result_r = seurat_v4_rt_r(k)
     elapsed_2 = result_r
 
-    elapsed = elapsed_1 + elapsed_2
+    elapsed = elapsed_1 + elapsed_2 
+
+    os.remove('X1.csv')
+    os.remove('X2.csv')
+    os.remove('X1_pca.csv')
+    os.remove('X2_pca.csv')
 
     return elapsed
