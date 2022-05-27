@@ -30,6 +30,6 @@ seurat_v4_rt <- function(k){
                                     verbose = FALSE)
 
     toc = Sys.time()
-    elapsed = toc-tic
-    return(elapsed)   
+    elapsed_2 = toc-tic
+    return(elapsed_2)   
 }
