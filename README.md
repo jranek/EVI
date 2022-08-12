@@ -53,6 +53,9 @@ conda activate venv_EVI
 make
 ```
 
+## License
+This software is licensed under the MIT license (https://opensource.org/licenses/MIT).
+
 ## Data access
 You can download all of the preprocessed loom and h5ad files from the [Zenodo](https://zenodo.org/record/6110279#.Yg1jPN_MK3C) repository. This can be done directly from the website or through the terminal. 
 
