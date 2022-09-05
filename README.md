@@ -4,7 +4,7 @@ Expression and Velocity Integration
 ## Introduction
 EVI is a python package designed for evaluating multi-modal data integration strategies on combining unspliced, spliced, and RNA velocity gene expression modalities for trajectory inference and disease prediction tasks. For more details on the methods considered and the overall benchmarking pipeline, please read the associated preprint:
 
-[Ranek, J. S., Stanley, N., and Purvis, J. E. Integrating temporal single-cell gene expression modalities for trajectory inference and disease prediction. _bioRxiv_, March 2022.](https://doi.org/10.1101/2022.03.01.482381)
+[Ranek, J. S., Stanley, N., and Purvis, J. E. Integrating temporal single-cell gene expression modalities for trajectory inference and disease prediction. _Genome Biology_. 2022. 23, 1–32](https://genomebiology.biomedcentral.com/articles/10.1186/s13059-022-02749-0)
 
 ## Overview
 <p align="center">
