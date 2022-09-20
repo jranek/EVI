@@ -65,7 +65,7 @@ If you'd like to list all of the publicly available files for download,
 from lxml import html
 import requests
 
-r = requests.get(f'https://zenodo.org/record/6110279#.Yg1jPN_MK3C')
+r = requests.get(f'https://zenodo.org/record/6587903')
 content = html.fromstring(r.content)
 hrefs = content.xpath('//a/@href')
 files = [i for i in hrefs if i.endswith('?download=1')]
