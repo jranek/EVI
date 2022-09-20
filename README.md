@@ -2,7 +2,7 @@
 Expression and Velocity Integration
 
 ## Introduction
-EVI is a python package designed for evaluating multi-modal data integration strategies on combining unspliced, spliced, and RNA velocity gene expression modalities for trajectory inference and disease prediction tasks. For more details on the methods considered and the overall benchmarking pipeline, please read the associated preprint:
+EVI is a python package designed for evaluating multi-modal data integration strategies on combining unspliced, spliced, and RNA velocity gene expression modalities for trajectory inference and disease prediction tasks. For more details on the methods considered and the overall benchmarking pipeline, please read the associated paper:
 
 [Ranek, J. S., Stanley, N., and Purvis, J. E. Integrating temporal single-cell gene expression modalities for trajectory inference and disease prediction. _Genome Biology_. 2022. 23, 1–32](https://genomebiology.biomedcentral.com/articles/10.1186/s13059-022-02749-0)
 
@@ -57,7 +57,7 @@ make
 This software is licensed under the MIT license (https://opensource.org/licenses/MIT).
 
 ## Data access
-You can download all of the preprocessed loom and h5ad files from the [Zenodo](https://zenodo.org/record/6110279#.Yg1jPN_MK3C) repository. This can be done directly from the website or through the terminal. 
+You can download all of the preprocessed loom and h5ad files from the [Zenodo](https://zenodo.org/record/6587903) repository. This can be done directly from the website or through the terminal. 
 
 If you'd like to list all of the publicly available files for download,
 
@@ -76,7 +76,7 @@ print(files)
 If you'd like to download an example dataset from the command line, please specify both the zenodo url https://zenodo.org/ and the dataset string identifier from above.  
 
 ```
-curl 'https://zenodo.org/record/6110279/files/adata_lane.h5ad?download=1' --output adata_lane.h5ad
+curl 'https://zenodo.org/record/6587903/files/adata_lane.h5ad?download=1' --output adata_lane.h5ad
 ```
 ## Tutorial
 Given unspliced, spliced, or RNA velocity gene expression modalities, you can compare multi-modal data integration strategies using the evi class as follows. 
